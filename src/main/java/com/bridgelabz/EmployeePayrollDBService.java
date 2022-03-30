@@ -8,6 +8,8 @@ import java.util.List;
 public class EmployeePayrollDBService {
 
     private static final String GET_EMPLOYEE_QRY = "SELECT * FROM EMPLOYEE_PAYROLL WHERE NAME = '%s';";
+    private static final String GET_EMPLOYEE_QRY_PS = "SELECT * FROM EMPLOYEE_PAYROLL WHERE NAME = ?";
+    private PreparedStatement preparedStatement = null;
     private static EmployeePayrollDBService employeePayrollDBService = null;
 
     private EmployeePayrollDBService() {}
@@ -17,6 +19,15 @@ public class EmployeePayrollDBService {
             employeePayrollDBService = new EmployeePayrollDBService();
         }
         return employeePayrollDBService;
+    }
+
+    private void prepareStatementForEmployeeData() {
+        try{
+            Connection connection = this.getConnection();
+            this.preparedStatement = connection.prepareStatement(GET_EMPLOYEE_QRY_PS);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -42,21 +53,22 @@ public class EmployeePayrollDBService {
                 employeePayrollList = processResultSet(resultSet);
             }
         } catch(java.sql.SQLException e) {
-                e.printStackTrace();;
+                e.printStackTrace();
             }
         return employeePayrollList;
     }
 
     public List<EmployeePayrollData> readEmployeeData(String name) {
         List<EmployeePayrollData> employeePayrollList = new ArrayList();
-        try(Connection connection = this.getConnection()) {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(String.format(GET_EMPLOYEE_QRY, name));
-            if (resultSet != null) {
-                employeePayrollList = processResultSet(resultSet);
-            }
-        } catch(java.sql.SQLException e) {
-            e.printStackTrace();;
+        if (this.preparedStatement == null) {
+            this.prepareStatementForEmployeeData();
+        }
+        try {
+            this.preparedStatement.setString(1, name);
+            ResultSet rs = this.preparedStatement.executeQuery();
+            employeePayrollList = this.processResultSet(rs);
+        } catch(SQLException e) {
+            e.printStackTrace();
         }
         return employeePayrollList;
     }
@@ -118,7 +130,7 @@ public class EmployeePayrollDBService {
     }
 
     public int updateEmployeeSalary(String name, double salary) {
-        String updateQuery = String.format("update employee_payroll set salary = %.2f where name = '%s'", salary, name);
+        String updateQuery = String.format("update employee_payroll set salary = %.2f where name = '%s';", salary, name);
         Statement statement = null;
         try(Connection connection = this.getConnection()) {
             statement = connection.createStatement();
