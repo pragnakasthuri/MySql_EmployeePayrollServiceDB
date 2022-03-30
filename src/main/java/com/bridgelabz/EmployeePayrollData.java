@@ -6,6 +6,7 @@ public class EmployeePayrollData {
     private int id;
     private String name;
     private String gender;
+    private double salary;
     private long phoneNumber;
     private String address;
     private String department;
@@ -21,11 +22,12 @@ public class EmployeePayrollData {
      * @param department
      * @param startDate
      */
-    public EmployeePayrollData(int id, String name, String  gender, long phoneNumber, String address,
+    public EmployeePayrollData(int id, String name, String  gender, double salary, long phoneNumber, String address,
                                String department, LocalDate startDate) {
         this.id = id;
         this.name = name;
         this.gender = gender;
+        this.salary =  salary;
         this.phoneNumber = phoneNumber;
         this.address = address;
         this.department = department;
@@ -89,5 +91,21 @@ public class EmployeePayrollData {
 
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
+    }
+
+    public void setSalary(double salary) {
+        this.salary = salary;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EmployeePayrollData that = (EmployeePayrollData) o;
+        return id == that.id && Double.compare(salary, that.getSalary()) == 0 && name.equalsIgnoreCase(that.getName());
     }
 }
