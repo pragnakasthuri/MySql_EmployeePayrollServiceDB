@@ -7,9 +7,10 @@ import java.util.List;
 
 public class EmployeePayrollDBService {
 
-    private static final String GET_EMPLOYEE_QRY = "SELECT * FROM EMPLOYEE_PAYROLL WHERE NAME = '%s';";
+    private static final String UPDATE_EMP_SAL_QRY = "UPDATE EMPLOYEE_PAYROLL SET SALARY = ? WHERE NAME = ?";
     private static final String GET_EMPLOYEE_QRY_PS = "SELECT * FROM EMPLOYEE_PAYROLL WHERE NAME = ?";
     private PreparedStatement preparedStatement = null;
+    private PreparedStatement updatePrepareStatement = null;
     private static EmployeePayrollDBService employeePayrollDBService = null;
 
     private EmployeePayrollDBService() {}
@@ -36,14 +37,14 @@ public class EmployeePayrollDBService {
      */
     public static void main(String[] args) {
         EmployeePayrollDBService service = new EmployeePayrollDBService();
-        service.readData();
+        service.readEmployeePayrollData();
     }
 
     /**
      * Creating readData method to read data from employee_payroll DB
      * @return employeePayrollList
      */
-    public List<EmployeePayrollData> readData() {
+    public List<EmployeePayrollData> readEmployeePayrollData() {
         String sql = "SELECT * FROM employee_Payroll";
         List<EmployeePayrollData> employeePayrollList = new ArrayList();
         try(Connection connection = this.getConnection()) {
@@ -130,14 +131,25 @@ public class EmployeePayrollDBService {
     }
 
     public int updateEmployeeSalary(String name, double salary) {
-        String updateQuery = String.format("update employee_payroll set salary = %.2f where name = '%s';", salary, name);
-        Statement statement = null;
-        try(Connection connection = this.getConnection()) {
-            statement = connection.createStatement();
-            return statement.executeUpdate(updateQuery);
-        }catch (SQLException e) {
+        if (this.updatePrepareStatement == null) {
+            this.prepareStatementToUpdateEmployeeSalary();
+        }
+        try {
+            this.updatePrepareStatement.setDouble(1, salary);
+            this.updatePrepareStatement.setString(2,name);
+            return this.updatePrepareStatement.executeUpdate();
+        } catch(SQLException e) {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    private void prepareStatementToUpdateEmployeeSalary() {
+        try{
+            Connection connection = this.getConnection();
+            this.updatePrepareStatement = connection.prepareStatement(UPDATE_EMP_SAL_QRY);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -9,7 +9,7 @@ public class EmployeePayrollServiceTest {
     @Test
     public void givenEmployeePayrollInDB_WhenRetrieved_ShouldMatchEmployeeCount() {
         EmployeePayrollDBService employeePayrollDBService = EmployeePayrollDBService.getInstance();
-        List<EmployeePayrollData> employeePayrollData= employeePayrollDBService.readData();
+        List<EmployeePayrollData> employeePayrollData= employeePayrollDBService.readEmployeePayrollData();
         Assertions.assertEquals(9,employeePayrollData.size());
     }
 

@@ -16,7 +16,7 @@ public class EmployeePayrollService {
     }
 
     public List<EmployeePayrollData> readEmployeePayrollData() {
-        this.employeePayrollDataList = this.employeePayrollDBService.readData();
+        this.employeePayrollDataList = this.employeePayrollDBService.readEmployeePayrollData();
         return this.employeePayrollDataList;
     }
 
