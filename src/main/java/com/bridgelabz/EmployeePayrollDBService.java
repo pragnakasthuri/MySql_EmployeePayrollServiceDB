@@ -6,15 +6,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EmployeePayrollDBService {
+    /**
+     * Initializing all the  sql queries
+     */
+    private static final String SELECT_ALL_EMPLOYEES = "SELECT * FROM employee_Payroll;";
+    private static final String UPDATE_EMP_SAL_BASED_ON_NAME_QRY = "UPDATE EMPLOYEE_PAYROLL SET SALARY = ? WHERE NAME = ?;";
+    private static final String SELECT_EMPLOYEE_WHERE_NAME_QRY = "SELECT * FROM EMPLOYEE_PAYROLL WHERE NAME = ?;";
+    private static final String SELECT_EMPLOYEES_WHERE_DATE_QRY = "SELECT * FROM employee_payroll WHERE start BETWEEN '%s' AND '%s';";
 
-    private static final String UPDATE_EMP_SAL_QRY = "UPDATE EMPLOYEE_PAYROLL SET SALARY = ? WHERE NAME = ?";
-    private static final String GET_EMPLOYEE_QRY_PS = "SELECT * FROM EMPLOYEE_PAYROLL WHERE NAME = ?";
     private PreparedStatement preparedStatement = null;
     private PreparedStatement updatePrepareStatement = null;
+
     private static EmployeePayrollDBService employeePayrollDBService = null;
 
-    private EmployeePayrollDBService() {}
+    /**
+     * Creating an EmployeePayrollDBService as private to make it singleton
+     */
+    private EmployeePayrollDBService() {
+    }
 
+    /**
+     * Creating getInstance method to use this singleton object
+     * @return employeePayrollDBService
+     */
     public static EmployeePayrollDBService getInstance() {
         if (employeePayrollDBService == null) {
             employeePayrollDBService = new EmployeePayrollDBService();
@@ -22,10 +36,13 @@ public class EmployeePayrollDBService {
         return employeePayrollDBService;
     }
 
+    /**
+     * Creating prepareStatementForEmployeeData for executing prepared statement
+     */
     private void prepareStatementForEmployeeData() {
-        try{
+        try {
             Connection connection = this.getConnection();
-            this.preparedStatement = connection.prepareStatement(GET_EMPLOYEE_QRY_PS);
+            this.preparedStatement = connection.prepareStatement(SELECT_EMPLOYEE_WHERE_NAME_QRY);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -37,28 +54,40 @@ public class EmployeePayrollDBService {
      */
     public static void main(String[] args) {
         EmployeePayrollDBService service = new EmployeePayrollDBService();
-        service.readEmployeePayrollData();
+        service.readEmployeePayrollData(SELECT_ALL_EMPLOYEES);
     }
 
     /**
-     * Creating readData method to read data from employee_payroll DB
-     * @return employeePayrollList
+     * Creating readData public method to read data from employee_payroll DB
+     * @return readEmployeePayrollData
      */
     public List<EmployeePayrollData> readEmployeePayrollData() {
-        String sql = "SELECT * FROM employee_Payroll";
+        return readEmployeePayrollData(SELECT_ALL_EMPLOYEES);
+    }
+
+    /**
+     * Creating readData private method to read data from employee_payroll DB
+     * @return employeePayrollList
+     */
+    private List<EmployeePayrollData> readEmployeePayrollData(String query) {
         List<EmployeePayrollData> employeePayrollList = new ArrayList();
-        try(Connection connection = this.getConnection()) {
+        try (Connection connection = this.getConnection()) {
             Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);
+            ResultSet resultSet = statement.executeQuery(query);
             if (resultSet != null) {
                 employeePayrollList = processResultSet(resultSet);
             }
-        } catch(java.sql.SQLException e) {
-                e.printStackTrace();
-            }
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
         return employeePayrollList;
     }
 
+    /**
+     * This method is created to read an employee data based on given name
+     * @param name
+     * @return emp payroll data object in a list
+     */
     public List<EmployeePayrollData> readEmployeeData(String name) {
         List<EmployeePayrollData> employeePayrollList = new ArrayList();
         if (this.preparedStatement == null) {
@@ -68,14 +97,22 @@ public class EmployeePayrollDBService {
             this.preparedStatement.setString(1, name);
             ResultSet rs = this.preparedStatement.executeQuery();
             employeePayrollList = this.processResultSet(rs);
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return employeePayrollList;
     }
 
+    /**
+     * This is a generic method to process the result set and create emp payroll list
+     * @param resultSet
+     * @return list of emp payroll data objects
+     */
     private List<EmployeePayrollData> processResultSet(ResultSet resultSet) {
         List<EmployeePayrollData> employeePayrollDataList = new ArrayList<>();
+        if (resultSet == null) {
+            return employeePayrollDataList;
+        }
         try {
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
@@ -97,6 +134,7 @@ public class EmployeePayrollDBService {
 
     /**
      * Creating getConnection to establish the connection between java and Mysql DB through JDBC
+     *
      * @return - connection
      */
     private Connection getConnection() {
@@ -114,42 +152,62 @@ public class EmployeePayrollDBService {
             Class.forName("com.mysql.cj.jdbc.Driver");
             System.out.println("Driver Loaded");
         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Cannot find the driver",e);
+            throw new IllegalStateException("Cannot find the driver", e);
         }
 
         try {
-            System.out.println("Connecting to database: "+jdbcURL);
+            System.out.println("Connecting to database: " + jdbcURL);
             /**
              * Establishing the connection
              */
             connection = DriverManager.getConnection(jdbcURL, userName, password);
             System.out.println("Connection is Successful");
-        } catch (java.sql.SQLException e){
+        } catch (java.sql.SQLException e) {
             e.getMessage();
         }
         return connection;
     }
 
+    /**
+     * Creating this method to update the employee salary for given name
+     * @param name - name of the employee
+     * @param salary - salary of the employee
+     * @return - count of the updated employee for given salary and name
+     */
     public int updateEmployeeSalary(String name, double salary) {
         if (this.updatePrepareStatement == null) {
             this.prepareStatementToUpdateEmployeeSalary();
         }
         try {
             this.updatePrepareStatement.setDouble(1, salary);
-            this.updatePrepareStatement.setString(2,name);
+            this.updatePrepareStatement.setString(2, name);
             return this.updatePrepareStatement.executeUpdate();
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return 0;
     }
 
+    /**
+     * Creating readEmployeePayrollForDateRange method to prepared statement
+     */
     private void prepareStatementToUpdateEmployeeSalary() {
-        try{
+        try {
             Connection connection = this.getConnection();
-            this.updatePrepareStatement = connection.prepareStatement(UPDATE_EMP_SAL_QRY);
+            this.updatePrepareStatement = connection.prepareStatement(UPDATE_EMP_SAL_BASED_ON_NAME_QRY);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Creating readEmployeePayrollForDateRange method to read employee payroll for date range from DB
+     * @param startDate - start date of the employee
+     * @param endDate - today's date
+     * @return - employeePayrollList
+     */
+    public List<EmployeePayrollData> readEmployeePayrollForDateRange(LocalDate startDate, LocalDate endDate) {
+        String sql = String.format(SELECT_EMPLOYEES_WHERE_DATE_QRY, Date.valueOf(startDate), Date.valueOf(endDate));
+        return this.readEmployeePayrollData(sql);
     }
 }

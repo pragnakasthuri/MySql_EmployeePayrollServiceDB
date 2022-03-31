@@ -101,6 +101,11 @@ public class EmployeePayrollData {
         return salary;
     }
 
+    /**
+     * Overriding equals method to check the equality
+     * @param o
+     * @return true or false
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
