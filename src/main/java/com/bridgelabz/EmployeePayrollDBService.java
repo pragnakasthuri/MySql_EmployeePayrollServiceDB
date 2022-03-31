@@ -1,9 +1,12 @@
 package com.bridgelabz;
 
+import javax.swing.plaf.nimbus.State;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EmployeePayrollDBService {
     /**
@@ -13,6 +16,8 @@ public class EmployeePayrollDBService {
     private static final String UPDATE_EMP_SAL_BASED_ON_NAME_QRY = "UPDATE EMPLOYEE_PAYROLL SET SALARY = ? WHERE NAME = ?;";
     private static final String SELECT_EMPLOYEE_WHERE_NAME_QRY = "SELECT * FROM EMPLOYEE_PAYROLL WHERE NAME = ?;";
     private static final String SELECT_EMPLOYEES_WHERE_DATE_QRY = "SELECT * FROM employee_payroll WHERE start BETWEEN '%s' AND '%s';";
+    private static final String SELECT_AVG_SALARY_GROUP_BY_GENDER = "SELECT GENDER, AVG(salary) as avg_salary FROM employee_payroll " +
+                                                                     "GROUP BY gender;";
 
     private PreparedStatement preparedStatement = null;
     private PreparedStatement updatePrepareStatement = null;
@@ -209,5 +214,25 @@ public class EmployeePayrollDBService {
     public List<EmployeePayrollData> readEmployeePayrollForDateRange(LocalDate startDate, LocalDate endDate) {
         String sql = String.format(SELECT_EMPLOYEES_WHERE_DATE_QRY, Date.valueOf(startDate), Date.valueOf(endDate));
         return this.readEmployeePayrollData(sql);
+    }
+
+    /**
+     * Creating getAverageSalaryByGender method to get the average salary by gender from DB
+     * @return genderAndAverageSalaryMap
+     */
+    public Map<String, Double> getAverageSalaryByGender() {
+        Map<String, Double> genderAndAverageSalaryMap = new HashMap<>();
+        try(Connection connection = this.getConnection()) {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(SELECT_AVG_SALARY_GROUP_BY_GENDER);
+            while (resultSet.next()) {
+                String gender = resultSet.getString("gender");
+                Double salary = resultSet.getDouble("avg_salary");
+                genderAndAverageSalaryMap.put(gender,salary);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return genderAndAverageSalaryMap;
     }
 }
