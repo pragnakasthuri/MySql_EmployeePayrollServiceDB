@@ -52,18 +52,27 @@ public class EmployeePayrollServiceTest {
     @Test
     public void givenPayrollData_WhenAvgSalaryRetrieved_ShouldMatchWithDB() {
         EmployeePayrollService employeePayrollService = new EmployeePayrollService();
-        Map<String, Double> averageSalaryByGender  = employeePayrollService.readAverageSalaryByGender();
+        Map<String, Double> averageSalaryByGender = employeePayrollService.readAverageSalaryByGender();
         Assertions.assertTrue(averageSalaryByGender.get("M").equals(1880000.0) &&
-                              averageSalaryByGender.get("F").equals(2050000.0));
-
+                averageSalaryByGender.get("F").equals(2050000.0));
     }
 
     @Test
     public void givenPayrollData_WhenAvgSalaryRetrieved_ShouldNotMatchWithDB() {
         EmployeePayrollService employeePayrollService = new EmployeePayrollService();
-        Map<String, Double> averageSalaryByGender  = employeePayrollService.readAverageSalaryByGender();
+        Map<String, Double> averageSalaryByGender = employeePayrollService.readAverageSalaryByGender();
         Assertions.assertFalse(averageSalaryByGender.get("M").equals(1800000.0) &&
                 averageSalaryByGender.get("F").equals(2000000.0));
+    }
 
+    @Test
+    public void givenNewEmployee_WhenAdded_ShouldSyncWithDB() {
+        EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+        List<EmployeePayrollData> employeePayrollData = employeePayrollService.readEmployeePayrollData();
+        employeePayrollService.addEmployeeToPayroll(12, "Gene", "F", 2500000.0, 9876543977L, "hyderabad", "sales", LocalDate.now());
+        boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Gene");
+        Assertions.assertTrue(result);
     }
 }
+
+
