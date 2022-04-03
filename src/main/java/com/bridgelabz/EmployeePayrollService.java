@@ -82,8 +82,8 @@ public class EmployeePayrollService {
         return employeePayrollDBService.getAverageSalaryByGender();
     }
 
-    public void addEmployeeToPayroll(int employeeId, String name, String gender, double salary, long phone_number,
+    public void addEmployeeToPayroll(String name, String gender, double salary, long phone_number,
                                      String address, String department, LocalDate start) {
-        employeePayrollDBService.addEmployeeToPayroll(employeeId, name, gender, salary, phone_number, address, department, start);
+        employeePayrollDBService.addEmployeeToPayroll(name, gender, salary, phone_number, address, department, start);
     }
 }
