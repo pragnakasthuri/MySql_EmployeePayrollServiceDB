@@ -82,6 +82,16 @@ public class EmployeePayrollService {
         return employeePayrollDBService.getAverageSalaryByGender();
     }
 
+    /**
+     * Creating addEmployeeToPayroll method to call addEmployeeToPayroll from EmployeePayrollDBService
+     * @param name
+     * @param gender
+     * @param salary
+     * @param phone_number
+     * @param address
+     * @param department
+     * @param start
+     */
     public void addEmployeeToPayroll(String name, String gender, double salary, long phone_number,
                                      String address, String department, LocalDate start) {
         employeePayrollDBService.addEmployeeToPayroll(name, gender, salary, phone_number, address, department, start);

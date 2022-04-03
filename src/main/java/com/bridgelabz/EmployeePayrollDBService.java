@@ -17,9 +17,10 @@ public class EmployeePayrollDBService {
     private static final String SELECT_EMPLOYEES_WHERE_DATE_QRY = "SELECT * FROM employee_payroll WHERE start BETWEEN '%s' AND '%s';";
     private static final String SELECT_AVG_SALARY_GROUP_BY_GENDER = "SELECT GENDER, AVG(salary) as avg_salary FROM employee_payroll " +
                                                                      "GROUP BY gender;";
-    private static final String INSERT_EMPLOYEE_QUERY = "INSERT INTO employee_payroll (name, gender, salary, phone_number, address, " +
+    private static final String INSERT_EMPLOYEE_QRY = "INSERT INTO employee_payroll (name, gender, salary, phone_number, address, " +
                                                         "department, start) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');";
-                                                        //name, gender, salary, phone_number, address, department, start;
+    private static final String INSERT_INTO_PAYROLL_DETAILS_QRY = "INSERT INTO payroll_details (employee_id, basic_pay, deductions, " +
+            "                                                  taxable_pay, tax, net_pay) VALUES ('%s', '%s', '%s', '%s', '%s', '%s');";
 
     private PreparedStatement preparedStatement = null;
     private PreparedStatement updatePrepareStatement = null;
@@ -238,13 +239,33 @@ public class EmployeePayrollDBService {
         return genderAndAverageSalaryMap;
     }
 
+    /**
+     * Creating addEmployeeToPayroll method to insert employee details into employee_payroll table
+     * and to insert employee salary details into payroll_details table
+     * Performing these wo as JDBC transaction
+     * @param name
+     * @param gender
+     * @param salary
+     * @param phone_number
+     * @param address
+     * @param department
+     * @param start
+     * @return employeePayrollData
+     */
     public EmployeePayrollData addEmployeeToPayroll(String name, String gender, double salary, long phone_number,
                                      String address, String department, LocalDate start) {
         int empId = -1;
         EmployeePayrollData employeePayrollData = null;
-        String sql = String.format(INSERT_EMPLOYEE_QUERY, name, gender, salary, phone_number, address, department, Date.valueOf(start));
-        try(Connection connection = this.getConnection()) {
-            Statement statement = connection.createStatement();
+        String sql = String.format(INSERT_EMPLOYEE_QRY, name, gender, salary, phone_number, address, department, Date.valueOf(start));
+        Connection connection = null;
+        try {
+            connection = this.getConnection();
+            connection.setAutoCommit(false);
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        try(Statement statement = connection.createStatement()) {
             int rowAffected = statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
             if(rowAffected == 1) {
                 ResultSet resultSet = statement.getGeneratedKeys();
@@ -253,6 +274,39 @@ public class EmployeePayrollDBService {
             employeePayrollData = new EmployeePayrollData(empId, name, gender, salary, phone_number, address, department, start);
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+        try(Statement statement = connection.createStatement()) {
+            double deductions = salary * 0.2;
+            double taxable_pay = salary - deductions;
+            double tax = taxable_pay * 0.1;
+            double net_pay = salary - tax;
+            String sql1 = String.format(INSERT_INTO_PAYROLL_DETAILS_QRY, empId, salary, deductions, taxable_pay, tax, net_pay);
+            int rowAffected = statement.executeUpdate(sql1);
+            if(rowAffected == 1) {
+                employeePayrollData = new EmployeePayrollData(empId, name, gender, salary, phone_number, address, department, start);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                /**
+                 * roll back if any exception occured
+                 */
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        } finally {
+            if (connection != null) {
+                try {
+                    /**
+                     * commit the statement if everything goes fine
+                     */
+                    connection.commit();
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return employeePayrollData;
     }
