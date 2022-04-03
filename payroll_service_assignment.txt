@@ -368,6 +368,33 @@ describe department;
 | dept_name | varchar(150) | NO   |     | NULL    |                |
 +-----------+--------------+------+-----+---------+----------------+
 
+mysql> create table payroll_details
+    -> (employee_id int unsigned not null,
+    -> basic_pay double not null,
+    -> deductions double not null,
+    -> taxable_pay double not null,
+    -> 
+    -> tax double not null,
+    -> net_pay double not null,
+    -> foreign key(employee_id)
+    -> references employee_payroll(id) on delete cascade);
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> describe payroll_details
+    -> ;
++-------------+--------------+------+-----+---------+-------+
+| Field       | Type         | Null | Key | Default | Extra |
++-------------+--------------+------+-----+---------+-------+
+| employee_id | int unsigned | NO   | MUL | NULL    |       |
+| basic_pay   | double       | NO   |     | NULL    |       |
+| deductions  | double       | NO   |     | NULL    |       |
+| taxable_pay | double       | NO   |     | NULL    |       |
+| tax         | double       | NO   |     | NULL    |       |
+| net_pay     | double       | NO   |     | NULL    |       |
++-------------+--------------+------+-----+---------+-------+
+6 rows in set (0.01 sec)
+
+
 
 
 
